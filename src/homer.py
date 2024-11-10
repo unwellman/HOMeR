@@ -3,9 +3,11 @@ from discord.ext import commands
 
 import os
 import time
+from functools import wraps
 
-class Homer(commands.Bot):
+class Homer (commands.Bot):
     def __init__ (self, *args, **kwargs):
+        self.admins = []
         try:
             self.mc_dir = kwargs.pop('mc_dir')
             self.mc_screen = kwargs.pop('mc_screen')
@@ -14,7 +16,26 @@ class Homer(commands.Bot):
         self.log = os.path.join(self.mc_dir, 'logs', 'screenlog.0')
         super().__init__(*args, **kwargs)
 
-    def pass_console(self, console):
+    def set_admin (self, admin):
+        '''
+        Provide Discord UUID to grant permission for
+        particularly dangerous commands
+        '''
+        self.admins.append(admin)
+
+    def admin_only (self, func):
+        @wraps(func)
+        async def run (*args, **kwargs):
+            # discord.py guarantees ctx argument first
+            author_id = args[0].author.id
+            if author_id not in self.admins:
+                msg = 'You do not have permission to run this command!'
+                await args[0].send(msg)
+            else:
+                return await func(*args, **kwargs)
+        return run
+
+    def pass_console (self, console):
         '''
         Pass a command to the minecraft console
         and return its output
@@ -28,18 +49,21 @@ class Homer(commands.Bot):
         os.system(cmd)
         time.sleep(0.5)
         os.system(flush(10)) # Restore default screen flush time
-        with open(self.log, 'rb') as log:
-            ret = self.__fetch_log(console, log)
+        ret = self.fetch_console(console)
         # Consider some post-processing to clean up screen escapes
         # Assume start with >[2K\n
         ret = ret[5:]
         return ret
 
-    def __fetch_log(self, console, log):
+    def fetch_console (self, console):
         '''
         Find last instance of console command in latest.log
         and grab Minecraft's output
         '''
+        with open(self.log, 'rb') as log:
+            return self.__fetch_log(console, log)
+
+    def __fetch_log (self, console, log):
         search = '>' + console
         search = search.encode(encoding='utf-8')
         if '\n'.encode(encoding='utf-8') in search:
@@ -73,10 +97,28 @@ homer = Homer('/', intents=intents,
               mc_screen='minecraft')
 
 @homer.command()
-async def console(ctx, *, arg):
+@homer.admin_only
+async def console (ctx, *, arg):
     try:
         ret = homer.pass_console(arg)
         await ctx.send('Server response:\n```' + ret + '```')
     except Exception as e:
         await ctx.send(f'Server threw exception: `{e}`')
 
+@homer.command()
+async def say (ctx, *, arg):
+    name = ctx.author.display_name
+    con = f'say [DISCORD - {name}] {arg}'
+    try:
+        ret = homer.pass_console(con)
+        await ctx.send('Sent message:\n```' + ret + '```')
+    except Exception as e:
+        await ctx.send(f'Server threw exception: `{e}`')
+
+@homer.command()
+async def list (ctx, *, arg):
+    try:
+        ret = homer.pass_console('list')
+        await ctx.send(f'```{ret}```')
+    except Exception as e:
+        await ctx.send('Server threw exception: `{e}`')
