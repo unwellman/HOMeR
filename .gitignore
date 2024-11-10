@@ -1,2 +1,2 @@
 # Don't commit a private key to source control!
-token.txt
+cfg.txt

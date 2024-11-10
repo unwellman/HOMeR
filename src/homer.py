@@ -116,7 +116,7 @@ async def say (ctx, *, arg):
         await ctx.send(f'Server threw exception: `{e}`')
 
 @homer.command()
-async def list (ctx, *, arg):
+async def list (ctx):
     try:
         ret = homer.pass_console('list')
         await ctx.send(f'```{ret}```')
