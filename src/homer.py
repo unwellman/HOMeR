@@ -99,6 +99,9 @@ homer = Homer('/', intents=intents,
 @homer.command()
 @homer.admin_only
 async def console (ctx, *, arg):
+    '''
+    DEVELOPER ONLY: Send any console command to the server
+    '''
     try:
         ret = homer.pass_console(arg)
         await ctx.send('Server response:\n```' + ret + '```')
@@ -107,8 +110,11 @@ async def console (ctx, *, arg):
 
 @homer.command()
 async def say (ctx, *, arg):
+    '''
+    Send a chat message to the server. Prefixed with [DISCORD: <your username>]
+    '''
     name = ctx.author.display_name
-    con = f'say [DISCORD - {name}] {arg}'
+    con = f'say [\e[0;32mDISCORD: \e[0m{name}] {arg}'
     try:
         ret = homer.pass_console(con)
         await ctx.send('Sent message:\n```' + ret + '```')
@@ -117,8 +123,13 @@ async def say (ctx, *, arg):
 
 @homer.command()
 async def list (ctx):
+    '''
+    List online players
+    '''
     try:
         ret = homer.pass_console('list')
         await ctx.send(f'```{ret}```')
     except Exception as e:
         await ctx.send('Server threw exception: `{e}`')
+
+
