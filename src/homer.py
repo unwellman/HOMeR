@@ -27,6 +27,9 @@ class Homer (commands.Bot):
         self.admins.append(admin)
 
     def admin_only (self, func):
+        '''
+        Decorator for developer-only commands
+        '''
         @wraps(func)
         async def run (*args, **kwargs):
             # discord.py guarantees ctx argument first
@@ -102,6 +105,16 @@ async def list (ctx):
         ret = homer.pass_console('list')
         await ctx.send(f'```{ret}```')
     except Exception as e:
-        await ctx.send('Server threw exception: `{e}`')
+        await ctx.send(f'Server threw exception: `{e}`')
 
+@homer.command()
+async def listen (ctx, mins):
+    '''
+    Get the last mins of server log
+    '''
+    #try:
+    ret = homer.log.time_listen(float(mins))
+    await ctx.send(f'```{ret}```')
+    #except Exception as e:
+    #    await ctx.send(f'Server threw exception: `{e}`')
 
