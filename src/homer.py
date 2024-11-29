@@ -68,8 +68,8 @@ class Homer (commands.Bot):
 intents = discord.Intents.default()
 intents.message_content = True
 homer = Homer('/', intents=intents,
-              mc_dir='/home/noah/minecraft',
-              mc_screen='minecraft')
+              mc_dir=os.environ['server'],
+              mc_screen=os.environ['screenID'])
 
 @homer.command()
 @homer.admin_only
